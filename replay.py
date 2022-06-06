@@ -1,24 +1,14 @@
-import cv2 
-camera = cv2.VideoCapture(1)
-
 from datetime import datetime, timedelta
 import time 
-
-def get_camera_frame():
-    success, frame = camera.read()  # read the camera frame
-    if success:
-        return frame
-    else:
-        print("unsuccessfully loaded frame")
-        return
+import requests
 
 def save_every_hour():
     while True:
-        dt = datetime.now() + timedelta(minutes=15)
 
-        filename = f"images/{dt}.jpg"
-        frame = get_camera_frame()
-        cv2.imwrite(filename, frame)
+        # requests.get('http://71.255.58.230/save_frame')
+        requests.get('http://localhost:80/save_frame')
+
+        dt = datetime.now() + timedelta(minutes=15)
 
         while datetime.now() < dt:
             time.sleep(1)

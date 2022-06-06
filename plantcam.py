@@ -1,12 +1,13 @@
 import cv2 
-camera = cv2.VideoCapture(1)
+camera = cv2.VideoCapture(0)
 
 from flask import Flask, render_template, Response
 app = Flask(__name__)
 
 import glob
-from natsort import natsorted
 import time
+from datetime import datetime, timedelta
+import os
 
 # livestream hosted at localhost:80/
 def gen_frames():  
@@ -32,7 +33,7 @@ def video_feed():
 # replay of images in 'images/' hosted at localhost:80/replay
 def get_replay_video():
     while True:
-        sorted_image_files = natsorted(glob.glob(f'images/*'))
+        sorted_image_files = sorted(glob.glob(f'images/*'), key=os.path.getmtime)
         for img_filename in sorted_image_files:
             frame = cv2.imread(img_filename)
             ret, buffer = cv2.imencode('.jpg', frame)
@@ -48,6 +49,25 @@ def replay():
 @app.route('/replay_video_feed')
 def replay_video_feed():
     return Response(get_replay_video(), mimetype='multipart/x-mixed-replace; boundary=frame')
+
+@app.route('/save_frame')
+def save_frame():
+    dt = datetime.now() + timedelta(minutes=15)
+
+    filename = f"images/{dt}.jpg"
+    frame = get_camera_frame()
+    cv2.imwrite(filename, frame)
+    
+    return render_template('index.html')
+
+def get_camera_frame():
+    success, frame = camera.read()  # read the camera frame
+    if success:
+        return frame
+    else:
+        print("unsuccessfully loaded frame")
+        return
+
 
 if __name__ == "__main__":
     app.run(debug=True, use_reloader=False, host="0.0.0.0", port=80)
